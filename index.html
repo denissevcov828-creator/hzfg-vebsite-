@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Конфігуратор ПК — Вибір комплектуючих</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#0ea5a3;--muted:#94a3b8;--glass:rgba(255,255,255,0.03)}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:linear-gradient(180deg,#071024 0%, #0b1220 100%); color:#e6eef6}
+    .container{max-width:980px;margin:36px auto;padding:24px;background:var(--card);border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+    h1{margin:0 0 12px;font-size:22px}
+    p.lead{color:var(--muted);margin:0 0 18px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    .card{background:var(--glass);padding:14px;border-radius:10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    select,input{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    .row{display:flex;gap:10px}
+    button{background:var(--accent);border:none;padding:10px 12px;border-radius:8px;color:#042022;font-weight:600;cursor:pointer}
+    .summary{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:12px;border-radius:8px}
+    ul.list{list-style:none;padding:0;margin:0}
+    li.item{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);display:flex;justify-content:space-between;align-items:center}
+    .ok{color:#86efac}
+    .bad{color:#fb7185}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    .small{font-size:13px;color:var(--muted)}
+    .flex-col{display:flex;flex-direction:column;gap:8px}
+    .hint{font-size:12px;color:var(--muted)}
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}.container{margin:12px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Конфігуратор ПК — вибір комплектуючих</h1>
+    <p class="lead">Швидко підберіть базові компоненти комп'ютера, миттєво побачте сумарну ціну та прості перевірки сумісності.</p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="flex-col">
+          <div>
+            <label for="cpu">Процесор (CPU)</label>
+            <select id="cpu"></select>
+          </div>
+
+          <div>
+            <label for="mobo">Материнська плата (Motherboard)</label>
+            <select id="mobo"></select>
+          </div>
+
+          <div class="row">
+            <div style="flex:1">
+              <label for="ram">ОЗП (RAM)</label>
+              <select id="ram"></select>
+            </div>
+            <div style="width:120px">
+              <label for="ramqty">Кількість модулів</label>
+              <select id="ramqty">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="gpu">Відеокарта (GPU)</label>
+            <select id="gpu"></select>
+          </div>
+
+          <div class="row">
+            <div style="flex:1">
+              <label for="storage">Накопичувач (SSD/HDD)</label>
+              <select id="storage"></select>
+            </div>
+            <div style="width:110px">
+              <label for="storqty">Кількість</label>
+              <select id="storqty"><option>1</option><option>2</option></select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div style="flex:1">
+              <label for="psu">Блок живлення (PSU)</label>
+              <select id="psu"></select>
+            </div>
+            <div style="width:110px">
+              <label for="case">Корпус</label>
+              <select id="case"></select>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+            <button id="calc">Порахувати</button>
+            <button id="reset" style="background:transparent;color:var(--accent);border:1px solid rgba(255,255,255,0.04)">Скинути</button>
+            <div style="margin-left:auto" class="small">Файл можна зберегти як <code>.html</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="summary">
+          <h3 style="margin:0 0 8px">Підсумок</h3>
+          <div class="small">Статус сумісності</div>
+          <ul id="compat" class="list" style="margin-top:8px"></ul>
+
+          <div style="margin-top:12px">
+            <div class="small">Сумарна ціна:</div>
+            <div id="price" style="font-size:20px;font-weight:700;margin-top:6px">0 ?</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="small">Список обраних компонентів:</div>
+            <ul id="chosen" class="list" style="margin-top:8px"></ul>
+          </div>
+
+          <div style="margin-top:12px" class="hint">Порада: додавайте або змінюйте комплектації в списках. Код легко редагувати у "Блокноті".</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Як користуватися: оберіть компоненти > натисніть «Порахувати». Система виконає базову перевірку сумісності (socket, тип ОЗП, потужність PSU).</footer>
+  </div>
+
+<script>
+// Прості набори компонентів (можна розширювати)
+const CPUS = [
+  {id:'intel_i3_12100', name:'Intel Core i3-12100 (LGA1700)', socket:'LGA1700', tdp:60, price:6700},
+  {id:'intel_i5_12400', name:'Intel Core i5-12400 (LGA1700)', socket:'LGA1700', tdp:65, price:10800},
+  {id:'amd_5600x', name:'AMD Ryzen 5 5600X (AM4)', socket:'AM4', tdp:65, price:9900},
+  {id:'amd_7600', name:'AMD Ryzen 5 7600 (AM5)', socket:'AM5', tdp:65, price:12500}
+];
+
+const MOBOS = [
+  {id:'m_atx_lga1700', name:'ASUS Prime (LGA1700, DDR4)', socket:'LGA1700', ramType:'DDR4', price:4200},
+  {id:'m_atx_lga1700_ddr5', name:'Gigabyte B660 (LGA1700, DDR5)', socket:'LGA1700', ramType:'DDR5', price:7600},
+  {id:'m_atx_am4', name:'MSI B550 (AM4, DDR4)', socket:'AM4', ramType:'DDR4', price:3800},
+  {id:'m_atx_am5', name:'ASRock B650 (AM5, DDR5)', socket:'AM5', ramType:'DDR5', price:8500}
+];
+
+const RAMS = [
+  {id:'ram_ddr4_16', name:'16GB (2x8) DDR4 3200MHz', type:'DDR4', sizeGB:16, price:2400},
+  {id:'ram_ddr4_32', name:'32GB (2x16) DDR4 3200MHz', type:'DDR4', sizeGB:32, price:4200},
+  {id:'ram_ddr5_16', name:'16GB (2x8) DDR5 5200MHz', type:'DDR5', sizeGB:16, price:5400},
+  {id:'ram_ddr5_32', name:'32GB (2x16) DDR5 5600MHz', type:'DDR5', sizeGB:32, price:9800}
+];
+
+const GPUS = [
+  {id:'gtx_1660', name:'NVIDIA GTX 1660 6GB', tdp:120, price:9500},
+  {id:'rtx_3060', name:'NVIDIA RTX 3060 12GB', tdp:170, price:17500},
+  {id:'rx_6600', name:'AMD RX 6600 8GB', tdp:132, price:13800}
+];
+
+const STOR = [
+  {id:'ssd_500', name:'SSD 500GB NVMe', type:'NVMe', price:1500},
+  {id:'ssd_1000', name:'SSD 1TB NVMe', type:'NVMe', price:2800},
+  {id:'hdd_2000', name:'HDD 2TB 7200rpm', type:'SATA', price:2200}
+];
+
+const PSUS = [
+  {id:'psu_500', name:'550W Bronze', watt:550, price:1700},
+  {id:'psu_650', name:'650W Gold', watt:650, price:2600},
+  {id:'psu_800', name:'800W Gold', watt:800, price:4200}
+];
+
+const CASES = [
+  {id:'case_midi', name:'Midi-Tower (ATX)', price:1200},
+  {id:'case_compact', name:'Micro-ATX корпус', price:1000}
+];
+
+// Керування DOM
+const $ = id => document.getElementById(id);
+function populate(select, items){ select.innerHTML = items.map(i=>`<option value="${i.id}">${i.name} — ${i.price} ?</option>`).join(''); }
+
+populate($('cpu'), CPUS);
+populate($('mobo'), MOBOS);
+populate($('ram'), RAMS);
+populate($('gpu'), GPUS);
+populate($('storage'), STOR);
+populate($('psu'), PSUS);
+populate($('case'), CASES);
+
+function findById(list,id){return list.find(x=>x.id===id);} 
+
+function calc(){
+  const cpu = findById(CPUS, $('cpu').value);
+  const mobo = findById(MOBOS, $('mobo').value);
+  const ram = findById(RAMS, $('ram').value);
+  const gpu = findById(GPUS, $('gpu').value);
+  const storage = findById(STOR, $('storage').value);
+  const psu = findById(PSUS, $('psu').value);
+  const cs = findById(CASES, $('case').value);
+  const ramqty = parseInt($('ramqty').value);
+  const storqty = parseInt($('storqty').value);
+
+  // Ціна
+  let price = 0;
+  price += cpu.price + mobo.price + gpu.price + psu.price + cs.price;
+  price += ram.price * (ramqty/ (ram.sizeGB/16)); // приблизна адаптація: якщо пакет 16GB — множимо
+  price += storage.price * storqty;
+
+  // Перевірки сумісності
+  const checks = [];
+  // Socket
+  if(cpu.socket === mobo.socket) checks.push({ok:true, text:`Процесор і материнська плата — сумісні (${cpu.socket})`});
+  else checks.push({ok:false, text:`Несумісний socket: CPU ${cpu.socket} ? MB ${mobo.socket}`});
+
+  // RAM type
+  if(mobo.ramType === ram.type) checks.push({ok:true, text:`Тип ОЗП сумісний: ${ram.type}`});
+  else checks.push({ok:false, text:`Несумісний тип ОЗП: материнська плата вимагає ${mobo.ramType}, вибрано ${ram.type}`});
+
+  // PSU wattage (приблизна оцінка)
+  const estimatedLoad = cpu.tdp + gpu.tdp + 80 + (storqty*10) + 50; // запас для інших компонентів
+  if(psu.watt >= Math.ceil(estimatedLoad*1.25)) checks.push({ok:true, text:`PSU: ${psu.watt}W — достатньо (потрібно ~${Math.ceil(estimatedLoad*1.25)}W із запасом)`});
+  else checks.push({ok:false, text:`PSU може бути замалим: ${psu.watt}W, оцінка потреби ~${Math.ceil(estimatedLoad*1.25)}W`});
+
+  // Case compatibility (very simple)
+  checks.push({ok:true, text:`Корпус: ${cs.name}`});
+
+  // Вивід
+  const $compat = $('compat'); $compat.innerHTML = '';
+  checks.forEach(c=>{
+    const li = document.createElement('li'); li.className='item';
+    const span = document.createElement('span'); span.textContent = c.text;
+    const status = document.createElement('span'); status.textContent = c.ok ? 'OK' : '!!!'; status.className = c.ok? 'ok':'bad';
+    li.appendChild(span); li.appendChild(status); $compat.appendChild(li);
+  });
+
+  $('price').textContent = price.toLocaleString('uk-UA') + ' ?';
+
+  const $chosen = $('chosen'); $chosen.innerHTML = '';
+  [
+    ['Процесор',cpu.name,cpu.price],
+    ['Материнська плата',mobo.name,mobo.price],
+    ['ОЗП', ram.name, ram.price*(ramqty/ (ram.sizeGB/16))],
+    ['Відеокарта',gpu.name,gpu.price],
+    ['Накопичувач',storage.name,storage.price*storqty],
+    ['PSU',psu.name,psu.price],
+    ['Корпус',cs.name,cs.price]
+  ].forEach(it=>{
+    const li = document.createElement('li'); li.className='item';
+    li.innerHTML = `<span>${it[0]}: ${it[1]}</span><strong>${Number(it[2]).toLocaleString('uk-UA')} ?</strong>`;
+    $chosen.appendChild(li);
+  });
+}
+
+$('calc').addEventListener('click', calc);
+$('reset').addEventListener('click', ()=>{document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);$('ramqty').value='2';$('storqty').value='1';$('compat').innerHTML='';$('price').textContent='0 ?';$('chosen').innerHTML='';});
+
+// Перший розрахунок при завантаженні
+calc();
+
+</script>
+</body>
+</html>
